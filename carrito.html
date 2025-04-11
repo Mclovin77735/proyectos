@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrito de Compras</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .producto {
+      background-color: white;
+      border-radius: 8px;
+      padding: 0;
+      margin: 20px auto;
+      width: 320px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .producto:hover {
+      transform: scale(1.02);
+    }
+
+    .producto img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .producto-info {
+      padding: 15px;
+    }
+
+    .producto h3 {
+      margin: 10px 0 5px;
+    }
+
+    .boton {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .boton:hover {
+      background-color: #2980b9;
+    }
+
+    .formulario {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .formulario input {
+      padding: 10px;
+      margin: 5px;
+      width: 280px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .eliminar {
+      background-color: #e74c3c;
+    }
+
+    .eliminar:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tu carrito</h1>
+  <div id="carrito-container"></div>
+
+  <button class="boton" onclick="vaciarCarrito()">Vaciar carrito</button>
+  <button class="boton" onclick="window.location.href='estructura.html'">Seguir comprando</button>
+
+  <div class="formulario">
+    <h2>Finalizar compra</h2>
+    <input type="text" id="nombre" placeholder="Tu nombre" required>
+    <input type="email" id="correo" placeholder="Tu correo" required>
+    <button class="boton" onclick="finalizarCompra()">Finalizar compra</button>
+  </div>
+
+  <script>
+    const carritoContainer = document.getElementById('carrito-container');
+    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+    function mostrarCarrito() {
+      carritoContainer.innerHTML = '';
+      if (carrito.length === 0) {
+        carritoContainer.innerHTML = '<p>Tu carrito está vacío.</p>';
+        return;
+      }
+
+      carrito.forEach((producto, index) => {
+        const div = document.createElement('div');
+        div.className = 'producto';
+        div.innerHTML = `
+          <img src="${producto.image}" alt="${producto.name}">
+          <div class="producto-info">
+            <h3>${producto.name}</h3>
+            <p>Precio: $${producto.price}</p>
+            <button class="boton eliminar" onclick="eliminarProducto(${index})">Eliminar</button>
+          </div>
+        `;
+        carritoContainer.appendChild(div);
+      });
+    }
+
+    function eliminarProducto(index) {
+      carrito.splice(index, 1);
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+      mostrarCarrito();
+    }
+
+    function vaciarCarrito() {
+      carrito = [];
+      localStorage.removeItem('carrito');
+      mostrarCarrito();
+    }
+
+    function finalizarCompra() {
+      const nombre = document.getElementById('nombre').value.trim();
+      const correo = document.getElementById('correo').value.trim();
+
+      if (!nombre || !correo) {
+        alert('Por favor completa tu nombre y correo');
+        return;
+      }
+
+      const datos = {
+        nombre,
+        correo,
+        carrito
+      };
+
+      fetch('http://localhost:3000/finalizar-compra', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.mensaje);
+        vaciarCarrito();
+        document.getElementById('nombre').value = '';
+        document.getElementById('correo').value = '';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Hubo un error al procesar tu compra.');
+      });
+    }
+
+    mostrarCarrito();
+  </script>
+</body>
+</html>
